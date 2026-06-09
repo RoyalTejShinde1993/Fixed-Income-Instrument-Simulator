@@ -1,0 +1,12 @@
+build/
+*.o
+*.obj
+*.exe
+*.log
+*.swp
+*.DS_Store
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+compile_commands.json

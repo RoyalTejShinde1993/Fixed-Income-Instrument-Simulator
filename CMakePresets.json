@@ -1,0 +1,35 @@
+{
+  "version": 3,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 24,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "default",
+      "description": "Configure with default settings",
+      "generator": "Unix Makefiles",
+      "binaryDir": "${sourceDir}/build"
+    },
+    {
+      "name": "sanitizers",
+      "description": "Configure with address and undefined behavior sanitizers enabled",
+      "generator": "Unix Makefiles",
+      "binaryDir": "${sourceDir}/build-sanitizers",
+      "cacheVariables": {
+        "ENABLE_SANITIZERS": "ON"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "default",
+      "configurePreset": "default"
+    },
+    {
+      "name": "sanitizers",
+      "configurePreset": "sanitizers"
+    }
+  ]
+}

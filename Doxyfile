@@ -1,0 +1,6 @@
+PROJECT_NAME = "Fixed Income Instrument Simulator"
+OUTPUT_DIRECTORY = docs
+INPUT = include src
+RECURSIVE = YES
+GENERATE_LATEX = NO
+QUIET = YES
