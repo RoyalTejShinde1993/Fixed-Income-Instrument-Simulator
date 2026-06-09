@@ -109,11 +109,6 @@ Continuous integration is configured in `.github/workflows/ci.yml` to:
 - run tests with CTest
 - execute `clang-tidy`
 
-## Resume-ready Summary
-
-> Fixed Income Trading Platform (C++20, Boost.Asio, FIX 4.4, GTest)
-> Designed and implemented a production-style fixed income analytics and trading platform supporting Treasury, Corporate, and Floating Rate instruments. Developed FIX 4.4 session management, sequence gap recovery-ready parsing, asynchronous TCP connectivity scaffolding, yield curve bootstrapping, bond pricing analytics (YTM, DV01, PV01, Duration, Convexity), portfolio risk aggregation, and CI pipelines with sanitizers.
-
 ## Project Structure
 
 - `include/fixed_income/` — public headers
