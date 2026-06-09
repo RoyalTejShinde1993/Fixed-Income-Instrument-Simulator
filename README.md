@@ -1,6 +1,6 @@
 # Fixed-Income-Instrument-Simulator
 
-A polished C++20 fixed income trading and analytics platform prototype with core pricing, yield curve construction, risk analytics, FIX 4.4 session handling, and asynchronous networking.
+A polished C++20 fixed income trading and analytics platform project module with core pricing, yield curve construction, risk analytics, FIX 4.4 session handling, and asynchronous networking.
 
 ## Overview
 
