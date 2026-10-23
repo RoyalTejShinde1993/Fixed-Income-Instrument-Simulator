@@ -48,3 +48,9 @@ target_include_directories(fixed_income_demo PRIVATE
 
 enable_testing()
 add_subdirectory(tests)
+
+# JSON analytics endpoint used by the local dashboard. Output is calculated by
+# the same C++ library as the command-line demo; no market data is fabricated.
+add_executable(fixed_income_dashboard_data src/dashboard_data.cpp)
+target_link_libraries(fixed_income_dashboard_data PRIVATE fixed_income)
+target_include_directories(fixed_income_dashboard_data PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)

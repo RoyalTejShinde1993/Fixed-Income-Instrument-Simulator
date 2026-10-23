@@ -1,6 +1,7 @@
 #include "fixed_income/bond.hpp"
 
 #include <gtest/gtest.h>
+#include <limits>
 
 using namespace fixed_income;
 
@@ -66,4 +67,24 @@ TEST(BondAnalytics, FloatingRateNotePricesWithForwardCurve) {
 
     EXPECT_GT(price, 900.0);
     EXPECT_LT(price, 1100.0);
+}
+
+TEST(BondAnalytics, SettlementBetweenCouponsUsesFractionalFirstPeriod) {
+    const auto issue = make_date(2024, 1, 1);
+    const auto settlement = make_date(2024, 4, 1);
+    const auto maturity = make_date(2026, 1, 1);
+    Bond bond(1000.0, 0.05, issue, maturity, Frequency::SemiAnnual, settlement);
+    const auto schedule = bond.cashFlowSchedule();
+
+    ASSERT_FALSE(schedule.empty());
+    EXPECT_LT(schedule.payments.front().yearFraction, 0.5);
+    EXPECT_GT(schedule.payments.front().yearFraction, 0.0);
+    if (schedule.payments.size() > 1) {
+        EXPECT_NEAR(schedule.payments[1].yearFraction - schedule.payments[0].yearFraction, 0.5, 1e-12);
+    }
+}
+
+TEST(BondAnalytics, RejectsNonFiniteYield) {
+    Bond bond(1000.0, 0.05, make_date(2021, 1, 1), make_date(2026, 1, 1), Frequency::SemiAnnual, make_date(2021, 1, 1));
+    EXPECT_THROW(bond.price(std::numeric_limits<double>::quiet_NaN()), std::invalid_argument);
 }

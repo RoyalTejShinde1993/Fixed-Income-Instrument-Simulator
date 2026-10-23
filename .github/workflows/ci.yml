@@ -15,7 +15,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y cmake g++ clang-format clang-tidy
+          sudo apt-get install -y cmake g++ libboost-system-dev clang-format clang-tidy
       - name: Configure
         run: cmake -S . -B build -DENABLE_SANITIZERS=ON
       - name: Build
@@ -26,3 +26,14 @@ jobs:
         run: |
           cmake -S . -B build-tidy -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
           clang-tidy -p build-tidy src/*.cpp || true
+
+      - name: SonarQube analysis (optional)
+        if: ${{ secrets.SONAR_TOKEN != '' && vars.SONAR_PROJECT_KEY != '' && vars.SONAR_HOST_URL != '' }}
+        uses: SonarSource/sonarqube-scan-action@v5
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ vars.SONAR_HOST_URL }}
+        with:
+          args: >-
+            -Dsonar.projectKey=${{ vars.SONAR_PROJECT_KEY }}
+            -Dsonar.cfamily.compile-commands=build/compile_commands.json

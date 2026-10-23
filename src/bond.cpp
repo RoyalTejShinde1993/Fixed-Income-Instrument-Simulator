@@ -1,6 +1,7 @@
 #include "fixed_income/bond.hpp"
 
 #include <cmath>
+#include <limits>
 #include <stdexcept>
 #include <type_traits>
 
@@ -56,11 +57,21 @@ Bond::Bond(double notional,
       maturityDate_(maturityDate),
       frequency_(frequency),
       settlementDate_(settlementDate >= issueDate ? settlementDate : issueDate) {
-    if (notional_ <= 0.0) {
-        throw std::invalid_argument("Notional must be greater than zero.");
+    if (!std::isfinite(notional_) || notional_ <= 0.0) {
+        throw std::invalid_argument("Notional must be finite and greater than zero.");
+    }
+    if (!std::isfinite(couponRate_) || couponRate_ < 0.0) {
+        throw std::invalid_argument("Coupon rate must be finite and non-negative.");
+    }
+    const int periodsPerYear = static_cast<int>(frequency_);
+    if (periodsPerYear != 1 && periodsPerYear != 2 && periodsPerYear != 4 && periodsPerYear != 12) {
+        throw std::invalid_argument("Unsupported coupon frequency.");
     }
     if (maturityDate_ <= issueDate_) {
         throw std::invalid_argument("Maturity date must be after issue date.");
+    }
+    if (settlementDate_ >= maturityDate_) {
+        throw std::invalid_argument("Settlement date must be before maturity date.");
     }
 }
 
@@ -94,17 +105,40 @@ double Bond::couponPayment() const noexcept {
 
 CashFlowSchedule Bond::cashFlowSchedule() const {
     CashFlowSchedule schedule;
-    const int monthsPerPeriod = 12 / static_cast<int>(frequency_);
+    const int periodsPerYear = static_cast<int>(frequency_);
+    const int monthsPerPeriod = 12 / periodsPerYear;
+    sys_days previousPaymentDate = issueDate_;
     sys_days paymentDate = add_months(issueDate_, monthsPerPeriod);
+    double firstRemainingPeriod = 0.0;
+    bool firstRemainingPayment = true;
+    std::size_t remainingPaymentIndex = 0;
+
     while (paymentDate <= maturityDate_) {
         if (paymentDate > settlementDate_) {
+            if (firstRemainingPayment) {
+                const auto fullPeriodDays = std::chrono::duration<double, std::ratio<86400>>(
+                    paymentDate - previousPaymentDate).count();
+                const auto remainingDays = std::chrono::duration<double, std::ratio<86400>>(
+                    paymentDate - settlementDate_).count();
+                if (fullPeriodDays <= 0.0 || remainingDays <= 0.0) {
+                    throw std::logic_error("Invalid coupon schedule period.");
+                }
+                firstRemainingPeriod = remainingDays / fullPeriodDays;
+                firstRemainingPayment = false;
+            }
+
             double amount = couponPayment();
             if (paymentDate == maturityDate_) {
                 amount += redemptionAmount();
             }
-            const double yearFraction = static_cast<double>(schedule.payments.size() + 1) / static_cast<int>(frequency_);
+            // Express time in coupon periods so fractional settlement periods are
+            // discounted consistently with the bond's periodic-compounding convention.
+            const double yearFraction = (firstRemainingPeriod + static_cast<double>(remainingPaymentIndex)) /
+                                        static_cast<double>(periodsPerYear);
             schedule.payments.push_back(CashFlow{paymentDate, amount, yearFraction});
+            ++remainingPaymentIndex;
         }
+        previousPaymentDate = paymentDate;
         paymentDate = add_months(paymentDate, monthsPerPeriod);
     }
     return schedule;
@@ -118,6 +152,9 @@ double Bond::discountFactor(double ytm, double yearFraction) const noexcept {
 }
 
 double Bond::price(double ytm) const {
+    if (!std::isfinite(ytm) || ytm <= -static_cast<double>(static_cast<int>(frequency_))) {
+        throw std::invalid_argument("Yield must be finite and above the periodic discounting limit.");
+    }
     const auto schedule = cashFlowSchedule();
     double presentValue = 0.0;
     for (const auto& payment : schedule.payments) {

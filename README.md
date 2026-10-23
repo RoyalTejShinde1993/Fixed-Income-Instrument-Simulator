@@ -120,3 +120,32 @@ Continuous integration is configured in `.github/workflows/ci.yml` to:
 - `.clang-format` — formatting rules
 
 
+
+## Dark Engineering Dashboard
+
+The repository includes a local dashboard for exploring bond analytics and viewing real SonarQube measures when a server is configured. Financial calculations are performed by a C++ executable linked to the `fixed_income` library; the browser does not calculate bond prices independently.
+
+### Build and launch
+
+```bash
+cmake -S . -B build
+cmake --build build --parallel 2
+python3 dashboard/server.py
+```
+
+Open <http://127.0.0.1:8080>. The dashboard binds to loopback by default. The analytics inputs and fixed demo dates are assumptions, not live market data. Results reflect the current implementation and are not a substitute for validating market conventions and pricing accuracy.
+
+### Optional SonarQube connection
+
+Set these variables before starting the dashboard server:
+
+```bash
+export SONAR_HOST_URL="https://your-sonarqube.example"
+export SONAR_PROJECT_KEY="your-project-key"
+export SONAR_TOKEN="your-token"
+python3 dashboard/server.py
+```
+
+The token remains server-side. If the server is not configured or has no analysis results, the dashboard shows unavailable values rather than synthetic quality metrics. To enable optional CI analysis, configure the GitHub repository variables `SONAR_HOST_URL` and `SONAR_PROJECT_KEY`, and the repository secret `SONAR_TOKEN`. SonarQube C++ analysis requires a compatible analyzer and a valid compilation database; coverage also requires a real coverage report.
+
+See [`dashboard/README.md`](dashboard/README.md) for details.

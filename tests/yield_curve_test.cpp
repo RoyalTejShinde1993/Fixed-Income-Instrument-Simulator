@@ -1,6 +1,8 @@
 #include "fixed_income/yield_curve.hpp"
 
 #include <cmath>
+#include <limits>
+#include <stdexcept>
 #include <gtest/gtest.h>
 
 using namespace fixed_income;
@@ -41,4 +43,12 @@ TEST(YieldCurveBootstrapper, BootstrapsFromDepositAndSwapRates) {
     EXPECT_EQ(curve.points().size(), 4u);
     EXPECT_NEAR(curve.zeroRate(0.25), 0.005, 1e-12);
     EXPECT_NEAR(curve.zeroRate(0.5), 0.007, 1e-12);
+}
+
+TEST(YieldCurve, RejectsDuplicateMaturitiesForLinearInterpolation) {
+    EXPECT_THROW((YieldCurve({{0.5, 0.01}, {0.5, 0.02}}, Interpolation::Linear)), std::invalid_argument);
+}
+
+TEST(YieldCurve, RejectsNonFiniteCurveValues) {
+    EXPECT_THROW((YieldCurve({{0.5, 0.01}, {1.0, std::numeric_limits<double>::infinity()}}, Interpolation::Linear)), std::invalid_argument);
 }

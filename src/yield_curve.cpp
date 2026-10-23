@@ -16,9 +16,20 @@ YieldCurve::YieldCurve(std::vector<CurvePoint> points, Interpolation interpolati
     if (points_.size() < 2) {
         throw std::invalid_argument("At least two curve points are required.");
     }
+    for (const auto& point : points_) {
+        if (!std::isfinite(point.yearFraction) || point.yearFraction <= 0.0 ||
+            !std::isfinite(point.zeroRate)) {
+            throw std::invalid_argument("Curve maturities must be positive and all curve values finite.");
+        }
+    }
     std::sort(points_.begin(), points_.end(), [](const CurvePoint& a, const CurvePoint& b) {
         return a.yearFraction < b.yearFraction;
     });
+    for (std::size_t i = 1; i < points_.size(); ++i) {
+        if (points_[i].yearFraction <= points_[i - 1].yearFraction) {
+            throw std::invalid_argument("Curve maturities must be unique and strictly increasing.");
+        }
+    }
     buildSpline();
 }
 
@@ -110,6 +121,9 @@ double YieldCurve::interpolateCubicSpline(double yearFraction) const {
 }
 
 double YieldCurve::zeroRate(double yearFraction) const {
+    if (!std::isfinite(yearFraction)) {
+        throw std::invalid_argument("Year fraction must be finite.");
+    }
     if (yearFraction <= 0.0) {
         return points_.front().zeroRate;
     }
@@ -126,7 +140,8 @@ double YieldCurve::discountFactor(double yearFraction) const {
 }
 
 double YieldCurve::forwardRate(double startYearFraction, double endYearFraction) const {
-    if (endYearFraction <= startYearFraction) {
+    if (!std::isfinite(startYearFraction) || !std::isfinite(endYearFraction) ||
+        startYearFraction < 0.0 || endYearFraction <= startYearFraction) {
         throw std::invalid_argument("End year fraction must be greater than start year fraction.");
     }
     const double dfStart = discountFactor(startYearFraction);
