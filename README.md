@@ -477,16 +477,6 @@ Never commit tokens or credentials. Use repository variables for non-secret CI c
 
 ---
 
-# ⚠️ Limitations and Production Considerations
-
-- The project does not connect to live market data by default.
-- Pricing results depend on the implemented conventions and supplied assumptions.
-- Validate day-count conventions, compounding, settlement dates, calendars, coupon schedules, floating-rate resets, and risk calculations before relying on financial outputs.
-- The FIX and networking components are scaffolding and require additional conformance, recovery, persistence, authentication, backpressure, observability, and operational testing before production use.
-- Dashboard quality metrics are only meaningful when backed by actual analysis results.
-
----
-
 # 🚀 Future Enhancements
 
 Potential directions for future development include:
